@@ -1,0 +1,18 @@
+🎓 UNIVERSITÉ - BASE DE DONNÉES COMPLÈTE APPGET
+============================================================
+
+🚀 COMPTES DE TEST PRINCIPAUX:
+----------------------------------------
+👑 Admin principal: admin@university.ma / admin123
+👑 Super admin: superadmin@university.ma / super123
+🏛️  Chef ISEN: karim.mansouri@university.ma / chef2024
+👨‍🏫 Prof: prof.alami@university.ma / prof123
+👨‍🎓 Étudiant: ahmed.berrada@etu.university.ma / etudiant123
+
+📊 STATISTIQUES FINALES:
+----------------------------------------
+Total utilisateurs: 608
+Départements: 5
+Programmes: 20
+Salles: 56
+Matières: 24

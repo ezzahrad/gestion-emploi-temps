@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- SEO Meta Tags -->
+    <title>AppGET - Gestion des Emplois du Temps</title>
+    <meta name="description" content="Application de gestion des emplois du temps universitaires - Université Ibn Zohr OUARZAZATE" />
+    <meta name="keywords" content="emploi du temps, université, gestion académique, planification, cours" />
+    <meta name="author" content="Équipe de développement AppGET" />
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="AppGET - Gestion des Emplois du Temps" />
+    <meta property="og:description" content="Application de gestion des emplois du temps universitaires" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://appget.university.edu" />
+    <meta property="og:image" content="/og-image.png" />
+    
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="AppGET - Gestion des Emplois du Temps" />
+    <meta name="twitter:description" content="Application de gestion des emplois du temps universitaires" />
+    <meta name="twitter:image" content="/twitter-image.png" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="AppGET" />
+    
+    <!-- Preconnect for better performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/src/main.tsx" as="script" crossorigin />
+    
+    <!-- DESKTOP FORCED LOADING STYLES -->
+    <style>
+      /* FORCER L'AFFICHAGE DESKTOP DÈS LE CHARGEMENT */
+      * {
+        box-sizing: border-box;
+      }
+      
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100% !important;
+        height: 100% !important;
+        min-width: 100vw !important;
+        min-height: 100vh !important;
+        overflow-x: hidden;
+      }
+      
+      #root {
+        width: 100% !important;
+        height: 100% !important;
+        min-width: 100vw !important;
+        min-height: 100vh !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      
+      /* ÉCRAN DE CHARGEMENT DESKTOP */
+      .app-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #1d4ed8 100%);
+        display: flex;
+        z-index: 9999;
+      }
+      
+      /* SIDEBAR SIMULÉE PENDANT LE CHARGEMENT */
+      .loading-sidebar {
+        width: 320px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+      
+      .loading-sidebar-logo {
+        width: 64px;
+        height: 64px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        backdrop-filter: blur(5px);
+      }
+      
+      .loading-sidebar-text {
+        color: white;
+        font-size: 24px;
+        font-weight: 700;
+        text-align: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      
+      .loading-sidebar-subtitle {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 14px;
+        font-weight: 500;
+        text-align: center;
+        margin-top: 0.5rem;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      
+      /* CONTENU PRINCIPAL PENDANT LE CHARGEMENT */
+      .loading-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: rgba(255, 255, 255, 0.05);
+      }
+      
+      .loading-topbar {
+        height: 64px;
+        background: rgba(255, 255, 255, 0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        padding: 0 2rem;
+        backdrop-filter: blur(10px);
+      }
+      
+      .loading-topbar-title {
+        color: white;
+        font-size: 20px;
+        font-weight: 600;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      
+      .loading-content {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        padding: 2rem;
+      }
+      
+      .loading-spinner {
+        width: 64px;
+        height: 64px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 2rem;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      .loading-text {
+        color: white;
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        text-align: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      
+      .loading-subtext {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 16px;
+        text-align: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      
+      .loading-progress {
+        width: 300px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 2px;
+        margin-top: 2rem;
+        overflow: hidden;
+      }
+      
+      .loading-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, rgba(255,255,255,0.8), rgba(255,255,255,1), rgba(255,255,255,0.8));
+        animation: loading 2s ease-in-out infinite;
+      }
+      
+      @keyframes loading {
+        0% { transform: translateX(-100%); }
+        50% { transform: translateX(100%); }
+        100% { transform: translateX(-100%); }
+      }
+      
+      /* RESPONSIVE MOBILE - FALLBACK */
+      @media (max-width: 1023px) {
+        .loading-sidebar {
+          display: none;
+        }
+        .loading-main {
+          width: 100%;
+        }
+        .app-loading {
+          flex-direction: column;
+        }
+        .loading-content {
+          justify-content: center;
+          min-height: calc(100vh - 64px);
+        }
+      }
+      
+      /* Hide loading screen once React app loads */
+      #root:not(:empty) .app-loading {
+        display: none !important;
+      }
+      
+      /* FORCER LE STYLE DESKTOP SUR L'APP */
+      .force-desktop-root {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: none !important;
+        min-width: 1200px !important;
+      }
+    </style>
+  </head>
+  
+  <body>
+    <!-- Application React container -->
+    <div id="root" class="force-desktop-root">
+      <!-- ÉCRAN DE CHARGEMENT DESKTOP -->
+      <div class="app-loading">
+        <!-- Sidebar simulée -->
+        <div class="loading-sidebar">
+          <div class="loading-sidebar-logo">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z" fill="white"/>
+            </svg>
+          </div>
+          <div class="loading-sidebar-text">AppGET</div>
+          <div class="loading-sidebar-subtitle">Gestion des EDT</div>
+        </div>
+        
+        <!-- Contenu principal -->
+        <div class="loading-main">
+          <!-- Topbar simulée -->
+          <div class="loading-topbar">
+            <div class="loading-topbar-title">Tableau de bord</div>
+          </div>
+          
+          <!-- Contenu avec spinner -->
+          <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Initialisation de l'interface desktop</div>
+            <div class="loading-subtext">Configuration de la sidebar et du layout...</div>
+            <div class="loading-progress">
+              <div class="loading-progress-bar"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Fallback for users with JavaScript disabled -->
+    <noscript>
+      <div style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        text-align: center;
+        background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+        color: white;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        z-index: 10000;
+      ">
+        <h1 style="margin-bottom: 1rem; font-size: 3rem; font-weight: 700;">
+          ⚠️
+        </h1>
+        <h2 style="margin-bottom: 1rem; font-size: 2rem; font-weight: 600;">
+          JavaScript requis
+        </h2>
+        <p style="margin-bottom: 2rem; max-width: 600px; line-height: 1.6; font-size: 1.125rem;">
+          AppGET nécessite JavaScript pour fonctionner. 
+          Veuillez activer JavaScript dans votre navigateur et actualiser la page.
+        </p>
+        <div style="padding: 1rem 2rem; background: rgba(255,255,255,0.2); border-radius: 8px; backdrop-filter: blur(10px);">
+          <p style="margin: 0; font-size: 0.875rem; opacity: 0.9;">
+            Support technique: support@appget.university.edu
+          </p>
+        </div>
+      </div>
+    </noscript>
+    
+    <!-- React app script -->
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Force desktop display -->
+    <script>
+      // FORCER L'AFFICHAGE DESKTOP IMMÉDIATEMENT
+      document.documentElement.style.width = '100vw';
+      document.documentElement.style.minWidth = '1200px';
+      document.documentElement.style.maxWidth = 'none';
+      document.body.style.width = '100vw';
+      document.body.style.minWidth = '1200px';
+      document.body.style.maxWidth = 'none';
+      document.body.style.margin = '0';
+      document.body.style.padding = '0';
+      
+      // Ajouter classe force-desktop au body
+      document.body.classList.add('force-desktop');
+      document.documentElement.classList.add('force-desktop');
+      
+      // Supprimer les contraintes de largeur au chargement de l'app
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          const containers = document.querySelectorAll('.max-w-md, .max-w-lg, .max-w-xl, .max-w-2xl, .max-w-3xl, .max-w-4xl, .max-w-5xl, .max-w-6xl, .max-w-7xl');
+          containers.forEach(function(container) {
+            container.style.maxWidth = 'none';
+            container.style.width = '100%';
+          });
+        }, 100);
+      });
+    </script>
+    
+    <!-- Service Worker Registration (for PWA) -->
+    <script>
+      if ('serviceWorker' in navigator && location.protocol === 'https:') {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
+    
+    <!-- Global error handler -->
+    <script>
+      window.addEventListener('error', (event) => {
+        console.error('Erreur globale:', event.error);
+      });
+      
+      window.addEventListener('unhandledrejection', (event) => {
+        console.error('Promise non gérée:', event.reason);
+      });
+    </script>
+  </body>
+</html>

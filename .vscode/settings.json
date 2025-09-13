@@ -1,0 +1,71 @@
+{
+  // Configuration CSS/Tailwind
+  "css.validate": true,
+  "css.lint.unknownAtRules": "ignore",
+  "scss.validate": true,
+  "scss.lint.unknownAtRules": "ignore",
+  
+  // Configuration Tailwind CSS IntelliSense
+  "tailwindCSS.includeLanguages": {
+    "typescript": "typescript",
+    "typescriptreact": "typescriptreact",
+    "javascript": "javascript",
+    "javascriptreact": "javascriptreact"
+  },
+  "tailwindCSS.rootFontSize": 16,
+  "tailwindCSS.classAttributes": ["class", "className"],
+  "tailwindCSS.emmetCompletions": true,
+  
+  // Configuration des chemins de fichiers
+  "typescript.preferences.includePackageJsonAutoImports": "auto",
+  "typescript.suggest.autoImports": true,
+  
+  // Configuration pour le projet React
+  "emmet.includeLanguages": {
+    "typescript": "html",
+    "typescriptreact": "html"
+  },
+  
+  // Configuration des extensions de fichiers
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  
+  // Configuration de l'workspace pour le frontend
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.git": true,
+    "**/src_backup_old": true
+  },
+  
+  // Exclure les dossiers de sauvegarde de l'analyse TypeScript
+  "typescript.preferences.exclude": [
+    "**/src_backup_old/**",
+    "**/node_modules_old/**"
+  ],
+  
+  "files.exclude": {
+    "**/src_backup_old": true,
+    "**/node_modules_old": true
+  },
+  
+  // Configuration ESLint pour TypeScript
+  "eslint.workingDirectories": ["frontend"],
+  "eslint.format.enable": true,
+  
+  // Configuration du formateur par défaut
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  
+  // Configuration spécifique pour les fichiers CSS
+  "[css]": {
+    "editor.suggest.insertMode": "replace"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}

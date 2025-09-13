@@ -1,0 +1,62 @@
+{
+  "1_authentification": {
+    "description": "Connexion et obtention du token",
+    "method": "POST",
+    "url": "http://127.0.0.1:8000/api/auth/login/",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "username": "admin_test",
+      "password": "admin123"
+    },
+    "response_example": {
+      "access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+      "refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+      "user": {
+        "id": 1,
+        "username": "admin_test",
+        "role": "ADMIN"
+      }
+    }
+  },
+  "2_notifications": {
+    "description": "Récupération des notifications",
+    "method": "GET",
+    "url": "http://127.0.0.1:8000/api/notifications/",
+    "headers": {
+      "Authorization": "Bearer <votre_token_access>"
+    },
+    "body": null
+  },
+  "3_schedules": {
+    "description": "Récupération des emplois du temps",
+    "method": "GET",
+    "url": "http://127.0.0.1:8000/api/schedule/schedules/",
+    "headers": {
+      "Authorization": "Bearer <votre_token_access>"
+    },
+    "body": null
+  },
+  "4_create_schedule": {
+    "description": "Création d'un emploi du temps",
+    "method": "POST",
+    "url": "http://127.0.0.1:8000/api/schedule/schedules/",
+    "headers": {
+      "Authorization": "Bearer <votre_token_access>",
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "title": "Cours de Mathématiques",
+      "subject": 1,
+      "teacher": 1,
+      "room": 1,
+      "program": 1,
+      "day_of_week": 0,
+      "start_time": "08:00:00",
+      "end_time": "10:00:00",
+      "week_start": "2024-09-02",
+      "week_end": "2024-09-08"
+    }
+  }
+}

@@ -1,0 +1,424 @@
+/* src/index.css - Styles DESKTOP OPTIMISÉS pour AppGET */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* Polices personnalisées */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* FORCER L'AFFICHAGE DESKTOP */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 font-sans antialiased;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* FORCER LA LARGEUR COMPLÈTE */
+  html, body, #root {
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 100vw !important;
+    min-height: 100vh !important;
+  }
+  
+  #root, .App {
+    @apply h-full w-full;
+    min-width: 100vw !important;
+  }
+
+  /* SUPPRIMER TOUTES LES CONTRAINTES DE LARGEUR MOBILE */
+  .container {
+    max-width: none !important;
+    width: 100% !important;
+  }
+
+  .max-w-md, .max-w-lg, .max-w-xl, .max-w-2xl, .max-w-3xl, .max-w-4xl, .max-w-5xl, .max-w-6xl, .max-w-7xl {
+    max-width: none !important;
+    width: 100% !important;
+  }
+
+  /* Styles pour les scrollbars */
+  ::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400;
+  }
+
+  /* Styles pour les inputs */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  textarea,
+  select {
+    @apply border border-gray-300 rounded-lg px-3 py-2 text-sm;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
+    @apply transition-all duration-200;
+  }
+
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  input[type="number"]:focus,
+  input[type="date"]:focus,
+  input[type="time"]:focus,
+  textarea:focus,
+  select:focus {
+    @apply ring-2 ring-primary-500 border-primary-500;
+  }
+
+  /* Boutons personnalisés */
+  .btn {
+    @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply bg-primary-600 text-white shadow-sm;
+    @apply hover:bg-primary-700 focus:ring-primary-500;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-900;
+    @apply hover:bg-gray-300 focus:ring-gray-500;
+  }
+
+  .btn-success {
+    @apply bg-green-600 text-white shadow-sm;
+    @apply hover:bg-green-700 focus:ring-green-500;
+  }
+
+  .btn-warning {
+    @apply bg-yellow-600 text-white shadow-sm;
+    @apply hover:bg-yellow-700 focus:ring-yellow-500;
+  }
+
+  .btn-error {
+    @apply bg-red-600 text-white shadow-sm;
+    @apply hover:bg-red-700 focus:ring-red-500;
+  }
+
+  /* Classes pour les liens */
+  .link {
+    @apply text-primary-600 hover:text-primary-700 transition-colors duration-200;
+  }
+
+  .link-muted {
+    @apply text-gray-600 hover:text-gray-700 transition-colors duration-200;
+  }
+}
+
+/* COMPOSANTS DESKTOP OPTIMISÉS */
+@layer components {
+  
+  /* DESKTOP LAYOUT - FORCER LA LARGEUR COMPLÈTE */
+  .desktop-layout {
+    @apply w-full h-full flex;
+    min-width: 100vw !important;
+    min-height: 100vh !important;
+  }
+
+  .desktop-sidebar {
+    @apply h-full bg-white border-r border-gray-200 shadow-lg;
+    @apply transition-all duration-300 ease-in-out;
+    @apply flex-shrink-0;
+  }
+
+  .desktop-sidebar.expanded {
+    width: 320px;
+  }
+
+  .desktop-sidebar.collapsed {
+    width: 64px;
+  }
+
+  .desktop-main {
+    @apply flex-1 flex flex-col;
+    @apply bg-gray-50 overflow-hidden;
+    width: calc(100vw - 320px) !important;
+  }
+
+  .desktop-main.sidebar-collapsed {
+    width: calc(100vw - 64px) !important;
+  }
+
+  .desktop-topbar {
+    @apply h-16 bg-white border-b border-gray-200 shadow-sm;
+    @apply flex items-center justify-between px-6;
+    @apply flex-shrink-0;
+  }
+
+  .desktop-content {
+    @apply flex-1 overflow-auto p-6;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* GRILLES DESKTOP EXTENSIBLES */
+  .desktop-grid {
+    @apply grid gap-6;
+  }
+
+  .desktop-grid-1 { grid-template-columns: 1fr; }
+  .desktop-grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .desktop-grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .desktop-grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .desktop-grid-5 { grid-template-columns: repeat(5, 1fr); }
+  .desktop-grid-6 { grid-template-columns: repeat(6, 1fr); }
+  .desktop-grid-8 { grid-template-columns: repeat(8, 1fr); }
+  .desktop-grid-12 { grid-template-columns: repeat(12, 1fr); }
+
+  /* Responsive sur grands écrans */
+  @media (min-width: 1920px) {
+    .desktop-grid-auto { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  }
+
+  @media (min-width: 2560px) {
+    .desktop-grid-auto { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  }
+
+  /* CARTES DESKTOP */
+  .desktop-card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-200;
+    @apply hover:shadow-md transition-all duration-200;
+    @apply p-6;
+  }
+
+  .desktop-card-header {
+    @apply border-b border-gray-200 pb-4 mb-6;
+  }
+
+  .desktop-card-title {
+    @apply text-xl font-semibold text-gray-900;
+  }
+
+  .desktop-card-subtitle {
+    @apply text-sm text-gray-600 mt-1;
+  }
+
+  /* BOUTONS DE NAVIGATION */
+  .nav-item {
+    @apply flex items-center px-4 py-2 text-gray-700;
+    @apply hover:bg-gray-100 transition-colors duration-200;
+    @apply rounded-lg mx-2 mb-1;
+  }
+
+  .nav-item.active {
+    @apply bg-primary-100 text-primary-700;
+  }
+
+  .nav-item-icon {
+    @apply mr-3 flex-shrink-0;
+  }
+
+  .nav-item-text {
+    @apply font-medium;
+  }
+
+  /* ANIMATIONS DESKTOP */
+  .hover-lift {
+    @apply transition-transform duration-200;
+  }
+
+  .hover-lift:hover {
+    @apply transform -translate-y-1;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-200;
+  }
+
+  .hover-scale:hover {
+    @apply transform scale-105;
+  }
+
+  /* SHADOWS MODERNES */
+  .shadow-soft {
+    box-shadow: 0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04);
+  }
+
+  .shadow-medium {
+    box-shadow: 0 4px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 40px -12px rgba(0, 0, 0, 0.1);
+  }
+
+  .shadow-strong {
+    box-shadow: 0 8px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+
+  /* RESPONSIVE DESIGN AMÉLIORÉ */
+  .container-desktop {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  @media (min-width: 1920px) {
+    .container-desktop {
+      padding-left: 3rem;
+      padding-right: 3rem;
+    }
+  }
+
+  @media (min-width: 2560px) {
+    .container-desktop {
+      padding-left: 4rem;
+      padding-right: 4rem;
+    }
+  }
+
+  /* LOADING STATES */
+  .skeleton {
+    @apply animate-pulse bg-gray-200 rounded;
+  }
+
+  /* FORMULAIRES OPTIMISÉS */
+  .form-grid {
+    @apply grid gap-4;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+
+  @media (min-width: 1024px) {
+    .form-grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .form-grid-3 { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  /* TABLES DESKTOP */
+  .desktop-table {
+    @apply w-full bg-white rounded-lg shadow-sm overflow-hidden;
+  }
+
+  .desktop-table th {
+    @apply bg-gray-50 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+  }
+
+  .desktop-table td {
+    @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
+  }
+
+  .desktop-table tr {
+    @apply border-b border-gray-200;
+  }
+
+  .desktop-table tr:hover {
+    @apply bg-gray-50;
+  }
+}
+
+/* UTILITAIRES DESKTOP */
+@layer utilities {
+  
+  /* FORCER L'AFFICHAGE DESKTOP */
+  .force-desktop {
+    width: 100vw !important;
+    max-width: none !important;
+    min-width: 1200px !important;
+  }
+
+  .force-full-width {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* ESPACEMENTS DESKTOP */
+  .padding-desktop {
+    @apply px-6 py-8;
+  }
+
+  @media (min-width: 1920px) {
+    .padding-desktop {
+      @apply px-8 py-12;
+    }
+  }
+
+  .margin-desktop {
+    @apply mx-auto;
+    width: 100%;
+    max-width: none;
+  }
+
+  /* ANIMATIONS SPÉCIALES */
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+
+  @keyframes scaleIn {
+    0% { transform: scale(0.95); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* HIDE ON MOBILE - FORCER DESKTOP */
+  .mobile-hidden {
+    display: block !important;
+  }
+
+  .desktop-only {
+    display: block !important;
+  }
+
+  /* RESPONSIVE OVERRIDES */
+  @media (max-width: 1023px) {
+    .force-desktop-behavior {
+      min-width: 1200px !important;
+      width: 1200px !important;
+      overflow-x: auto !important;
+    }
+  }
+}
+
+/* PRINT STYLES */
+@media print {
+  .desktop-layout {
+    @apply bg-white;
+  }
+  
+  .desktop-sidebar {
+    @apply hidden;
+  }
+  
+  .desktop-main {
+    width: 100% !important;
+  }
+  
+  .desktop-topbar {
+    @apply hidden;
+  }
+}
+
+/* DARK MODE SUPPORT */
+@media (prefers-color-scheme: dark) {
+  .dark body {
+    @apply bg-gray-900 text-gray-100;
+  }
+  
+  .dark .desktop-card {
+    @apply bg-gray-800 border-gray-700;
+  }
+  
+  .dark .desktop-sidebar {
+    @apply bg-gray-800 border-gray-700;
+  }
+  
+  .dark .desktop-topbar {
+    @apply bg-gray-800 border-gray-700;
+  }
+}

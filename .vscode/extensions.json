@@ -1,0 +1,31 @@
+{
+  "recommendations": [
+    // Extensions CSS/Tailwind
+    "bradlc.vscode-tailwindcss",
+    "csstools.postcss",
+    
+    // Extensions React/TypeScript
+    "ms-vscode.vscode-typescript-next",
+    "ms-typescript.typescript-importer",
+    "dsznajder.es7-react-js-snippets",
+    
+    // Extensions formatage/qualité code
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "ms-vscode.vscode-json",
+    
+    // Extensions Django (pour le backend)
+    "ms-python.python",
+    "ms-python.django",
+    "ms-python.flake8",
+    
+    // Extensions utilitaires
+    "ms-vscode.vscode-color",
+    "formulahendry.auto-rename-tag",
+    "ms-vscode.vscode-emmet",
+    
+    // Extensions Git
+    "mhutchie.git-graph",
+    "eamodio.gitlens"
+  ]
+}

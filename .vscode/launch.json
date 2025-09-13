@@ -1,0 +1,37 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "🚀 Debug Backend Django",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/backend/manage.py",
+      "args": ["runserver", "127.0.0.1:8000"],
+      "django": true,
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/backend",
+      "env": {
+        "DJANGO_SETTINGS_MODULE": "schedule_management.settings"
+      }
+    },
+    {
+      "name": "⚡ Debug Frontend React",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/frontend/node_modules/.bin/vite",
+      "args": ["--host", "localhost", "--port", "5173"],
+      "cwd": "${workspaceFolder}/frontend",
+      "console": "integratedTerminal",
+      "runtimeArgs": ["--preserve-symlinks"]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "🎯 Debug Full Stack (Backend + Frontend)",
+      "configurations": [
+        "🚀 Debug Backend Django",
+        "⚡ Debug Frontend React"
+      ]
+    }
+  ]
+}

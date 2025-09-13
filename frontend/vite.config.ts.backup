@@ -1,0 +1,186 @@
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import { resolve } from 'path'
+
+// Configuration Vite optimisée pour AppGET
+export default defineConfig({
+  plugins: [
+    react({
+      // Configuration React simplifiée et fonctionnelle
+      fastRefresh: true,
+    }),
+  ],
+
+  // Configuration du serveur de développement
+  server: {
+    port: 5173,
+    host: true, // Permet l'accès depuis d'autres appareils sur le réseau
+    open: true, // Ouvre automatiquement le navigateur
+    cors: true,
+    proxy: {
+      // Proxy pour les requêtes API vers Django
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('Proxy error:', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('Sending Request to the Target:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
+          });
+        },
+      },
+      // Proxy pour les médias Django
+      '/media': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+      // Proxy pour les fichiers statiques Django
+      '/static': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
+
+  // Configuration de build pour production
+  build: {
+    target: 'esnext',
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: true, // Source maps pour le debugging
+    
+    // Optimisation du bundle
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+      },
+      output: {
+        // Split des chunks pour optimiser le chargement
+        manualChunks: {
+          // Vendor chunk pour les dépendances externes
+          vendor: [
+            'react', 
+            'react-dom', 
+            'react-router-dom'
+          ],
+          // UI chunk pour les composants d'interface
+          ui: [
+            'lucide-react',
+            'react-hot-toast'
+          ],
+          // Utils chunk pour les utilitaires
+          utils: [
+            'date-fns',
+            'axios'
+          ],
+        },
+        // Nommage des chunks
+        chunkFileNames: (chunkInfo) => {
+          const facadeModuleId = chunkInfo.facadeModuleId 
+            ? chunkInfo.facadeModuleId.split('/').pop()?.replace(/\.[^/.]+$/, '') 
+            : 'chunk';
+          return `js/${facadeModuleId}-[hash].js`;
+        },
+        assetFileNames: (assetInfo) => {
+          if (!assetInfo.name) return 'assets/[name]-[hash][extname]';
+          
+          const info = assetInfo.name.split('.');
+          const ext = info[info.length - 1];
+          if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext)) {
+            return `images/[name]-[hash][extname]`;
+          }
+          if (/css/i.test(ext)) {
+            return `css/[name]-[hash][extname]`;
+          }
+          return `assets/[name]-[hash][extname]`;
+        },
+      },
+    },
+    
+    // Optimisation de la minification
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true, // Supprime les console.log en production
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info'],
+      },
+      mangle: {
+        safari10: true,
+      },
+    },
+    
+    // Optimisation des assets
+    assetsInlineLimit: 4096, // Inline les assets < 4kb
+    chunkSizeWarningLimit: 1000, // Warning si chunk > 1MB
+  },
+
+  // Résolution des modules
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, './src'),
+      '@components': resolve(__dirname, './src/components'),
+      '@pages': resolve(__dirname, './src/pages'),
+      '@contexts': resolve(__dirname, './src/contexts'),
+      '@services': resolve(__dirname, './src/services'),
+      '@utils': resolve(__dirname, './src/utils'),
+      '@types': resolve(__dirname, './src/types'),
+      '@assets': resolve(__dirname, './src/assets'),
+    },
+    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
+  },
+
+  // Variables d'environnement
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
+
+  // Optimisations pour le développement
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      'axios',
+      'date-fns',
+      'lucide-react',
+      'react-hot-toast',
+    ],
+    // Pré-bundling des dépendances pour améliorer les performances
+    force: false,
+  },
+
+  // Configuration pour le preview (après build)
+  preview: {
+    port: 4173,
+    host: true,
+    open: true,
+    cors: true,
+  },
+
+  // Gestion des variables d'environnement
+  envPrefix: 'VITE_',
+  
+  // Configuration de logging
+  logLevel: process.env.NODE_ENV === 'production' ? 'warn' : 'info',
+  
+  // Configuration pour Docker (si utilisé)
+  ...(process.env.DOCKER && {
+    server: {
+      host: '0.0.0.0',
+      port: 5173,
+      watch: {
+        usePolling: true,
+      },
+    },
+  }),
+})

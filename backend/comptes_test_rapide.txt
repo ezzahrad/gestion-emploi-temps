@@ -1,0 +1,55 @@
+🎓 COMPTES DE TEST RAPIDE - APPGET
+==================================================
+
+👑 ADMINISTRATEURS
+----------------------------------------
+Nom: souad ibaaz
+Email: souadibaaz@gmail.com
+Mot de passe: Voir script
+--------------------
+Nom: Admin Principal
+Email: admin@university.ma
+Mot de passe: admin123
+--------------------
+Nom: Super Administrateur
+Email: superadmin@university.ma
+Mot de passe: super123
+--------------------
+
+🏛️  CHEFS DE DÉPARTEMENT
+----------------------------------------
+Nom: khal ysf
+Email: ysf@gmail.com
+Mot de passe: Voir script
+--------------------
+Nom: Hassan BENALI
+Email: chef.info@university.ma
+Mot de passe: chef123
+--------------------
+
+👨‍🏫 ENSEIGNANTS
+----------------------------------------
+Nom: Mohamed ALAMI
+Email: prof.alami@university.ma
+Mot de passe: prof123
+--------------------
+Nom: Fatima TAZI
+Email: prof.tazi@university.ma
+Mot de passe: prof123
+--------------------
+
+👨‍🎓 ÉTUDIANTS
+----------------------------------------
+Nom: Ahmed BERRADA
+Email: ahmed.berrada@etu.university.ma
+Mot de passe: etudiant123
+--------------------
+Nom: Zineb CHRAIBI
+Email: zineb.chraibi@etu.university.ma
+Mot de passe: etudiant123
+--------------------
+Nom: Youssef IDRISSI
+Email: youssef.idrissi@etu.university.ma
+Mot de passe: etudiant123
+--------------------
+

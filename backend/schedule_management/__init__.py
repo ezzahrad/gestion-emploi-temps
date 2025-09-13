@@ -1,0 +1,1 @@
+# Django schedule management system
