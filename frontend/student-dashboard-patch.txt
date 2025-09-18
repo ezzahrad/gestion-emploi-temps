@@ -1,0 +1,14 @@
+// Patch rapide pour StudentDashboard - à ajouter au début du composant si nécessaire
+
+// Ajout de vérifications de sécurité
+if (isLoading) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+    </div>
+  );
+}
+
+// Vérifications supplémentaires pour éviter les crashes
+const safeWeekSchedules = Array.isArray(weekSchedules) ? weekSchedules : [];
+const safeTodaySchedules = Array.isArray(todaySchedules) ? todaySchedules : [];

@@ -31,6 +31,15 @@ urlpatterns = [
     path('api/core/', include('core.urls')),
     path('api/schedule/', include('schedule.urls')),
     path('api/notifications/', include('notifications.urls')),
+    path('api/grades/', include('grades.urls')),
+    path('api/absences/', include('absences.urls')),
+    path('api/pdf-export/', include('pdf_export.urls')),
+    
+    # API de génération d'emploi du temps (directe)
+    path('api/generate/', include('schedule.generation_urls')),
+    
+    # API d'import Excel
+    path('api/import/excel/', include('schedule.import_urls')),
 ]
 
 if settings.DEBUG:

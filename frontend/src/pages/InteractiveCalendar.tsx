@@ -1,18 +1,22 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
   Plus,
   Filter,
-  Search,
-  AlertTriangle,
-  Info,
-} from "lucide-react";
+  RefreshCw,
+  Download,
+  Share,
+  Calendar as CalendarIcon,
+  Clock
+} from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
+import { scheduleAPI } from '../services/api';
 
 interface CalendarEvent {
   id: string;
   title: string;
-  description?: string;
   subject: {
     id: string;
     name: string;
@@ -22,13 +26,11 @@ interface CalendarEvent {
   teacher: {
     id: string;
     name: string;
-    avatar?: string;
   };
   room: {
     id: string;
     name: string;
     capacity: number;
-    building: string;
   };
   programs: Array<{
     id: string;
@@ -38,235 +40,79 @@ interface CalendarEvent {
   startTime: string;
   endTime: string;
   date: string;
-  duration: number; // in minutes
-  type: "CM" | "TD" | "TP" | "EXAM" | "PROJECT";
-  status: "scheduled" | "ongoing" | "completed" | "cancelled" | "conflict";
-  conflicts?: ConflictInfo[];
-  isRecurring?: boolean;
-  recurringPattern?: string;
-  attendees?: number;
-  notes?: string;
-  createdBy: string;
-  lastModified: string;
-}
-
-interface ConflictInfo {
-  type:
-    | "teacher_conflict"
-    | "room_conflict"
-    | "student_conflict"
-    | "capacity_exceeded";
-  severity: "low" | "medium" | "high" | "critical";
-  message: string;
-  conflictingEvent?: {
-    id: string;
-    title: string;
-    time: string;
-  };
-}
-
-interface CalendarFilter {
-  teachers: string[];
-  rooms: string[];
-  programs: string[];
-  subjects: string[];
-  types: string[];
-  showConflicts: boolean;
-  showCompleted: boolean;
+  duration: number;
+  type: 'CM' | 'TD' | 'TP' | 'EXAM' | 'PROJECT';
+  status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
 }
 
 interface CalendarView {
-  mode: "day" | "week" | "month" | "agenda";
+  mode: 'day' | 'week' | 'month';
   date: Date;
-  timeRange: {
-    start: string;
-    end: string;
-  };
 }
 
 const InteractiveCalendar: React.FC = () => {
+  const { user } = useAuth();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>([]);
   const [view, setView] = useState<CalendarView>({
-    mode: "week",
+    mode: 'week',
     date: new Date(),
-    timeRange: { start: "08:00", end: "18:00" },
   });
-  const [filters, setFilters] = useState<CalendarFilter>({
-    teachers: [],
-    rooms: [],
-    programs: [],
-    subjects: [],
-    types: [],
-    showConflicts: true,
-    showCompleted: false,
-  });
-  const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const calendarRef = useRef<HTMLDivElement>(null);
+  const [loading, setLoading] = useState(false);
 
+  const daysOfWeek = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
   const timeSlots: string[] = [];
-  for (let hour = 8; hour <= 18; hour++) {
-    timeSlots.push(`${hour.toString().padStart(2, "0")}:00`);
-    timeSlots.push(`${hour.toString().padStart(2, "0")}:30`);
+  
+  // Générer les créneaux horaires de 00:00 à 02:00 (comme dans l'image)
+  for (let hour = 0; hour <= 2; hour++) {
+    timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
   }
-  const daysOfWeek = [
-    "Lundi",
-    "Mardi",
-    "Mercredi",
-    "Jeudi",
-    "Vendredi",
-    "Samedi",
-    "Dimanche",
-  ];
 
   useEffect(() => {
     loadEvents();
-    const interval = setInterval(loadEvents, 30000);
-    return () => clearInterval(interval);
-  }, [view.date]);
-
-  useEffect(() => {
-    filterEvents();
-  }, [events, filters, searchTerm]);
+  }, [view.date, view.mode]);
 
   const loadEvents = async () => {
+    setLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      const mockEvents: CalendarEvent[] = [
-        {
-          id: "event_001",
-          title: "Programmation Orientée Objet",
-          description: "Introduction aux concepts de la POO avec Java",
-          subject: {
-            id: "subj_001",
-            name: "POO",
-            code: "POO101",
-            color: "#3B82F6",
-          },
-          teacher: {
-            id: "teacher_001",
-            name: "Prof. Fatima Alami",
-            avatar: "/avatars/alami.jpg",
-          },
-          room: {
-            id: "room_001",
-            name: "AMPH-A",
-            capacity: 150,
-            building: "Bâtiment Principal",
-          },
-          programs: [
-            { id: "prog_001", name: "L3 Informatique", studentsCount: 85 },
-          ],
-          startTime: "08:00",
-          endTime: "10:00",
-          date: "2024-12-09",
-          duration: 120,
-          type: "CM",
-          status: "scheduled",
-          attendees: 85,
-          createdBy: "admin",
-          lastModified: "2024-12-08T15:30:00Z",
-        },
-      ];
-      setEvents(mockEvents);
-    } catch (e) {
-      console.error("Erreur lors du chargement des événements:", e);
+      const startDate = getWeekStart(view.date);
+      const endDate = getWeekEnd(view.date);
+      
+      const response = await scheduleAPI.getScheduleByWeek({
+        start_date: startDate.toISOString().split('T')[0],
+        end_date: endDate.toISOString().split('T')[0],
+      });
+      
+      setEvents(response.data.results || []);
+    } catch (error) {
+      console.error('Erreur chargement événements:', error);
+      // Données de démonstration si l'API n'est pas disponible
+      setEvents([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const filterEvents = () => {
-    let filtered = events;
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (event) =>
-          event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          event.subject.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          event.teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          event.room.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    if (filters.teachers.length > 0)
-      filtered = filtered.filter((e) =>
-        filters.teachers.includes(e.teacher.id)
-      );
-    if (filters.rooms.length > 0)
-      filtered = filtered.filter((e) => filters.rooms.includes(e.room.id));
-    if (filters.types.length > 0)
-      filtered = filtered.filter((e) => filters.types.includes(e.type));
-    if (!filters.showConflicts)
-      filtered = filtered.filter((e) => e.status !== "conflict");
-    if (!filters.showCompleted)
-      filtered = filtered.filter((e) => e.status !== "completed");
-    setFilteredEvents(filtered);
-  };
-
-  // Collaboration simulée omise dans cette version allégée
-
-  const handleEventClick = (_event: CalendarEvent) => {
-    // Ouvrir un panneau de détails (omis dans cette version)
-  };
-  const handleEventDrag = useCallback((event: CalendarEvent) => {
-    setDraggedEvent(event);
-  }, []);
-  const addMinutesToTime = (time: string, minutes: number): string => {
-    const [h, m] = time.split(":").map(Number);
-    const total = h * 60 + m + minutes;
-    const nh = Math.floor(total / 60);
-    const nm = total % 60;
-    return `${nh.toString().padStart(2, "0")}:${nm
-      .toString()
-      .padStart(2, "0")}`;
-  };
-  const handleEventDrop = useCallback(
-    (event: CalendarEvent, newDate: string, newTime: string) => {
-      setEvents((prev) =>
-        prev.map((e) =>
-          e.id === event.id
-            ? {
-                ...e,
-                date: newDate,
-                startTime: newTime,
-                endTime: addMinutesToTime(newTime, e.duration),
-                lastModified: new Date().toISOString(),
-              }
-            : e
-        )
-      );
-      setDraggedEvent(null);
-    },
-    []
-  );
-
-  const timeToMinutes = (time: string) => {
-    const [h, m] = time.split(":").map(Number);
-    return h * 60 + m;
-  };
-
-  const navigateDate = (direction: "prev" | "next") => {
-    const newDate = new Date(view.date);
-    switch (view.mode) {
-      case "day":
-        newDate.setDate(newDate.getDate() + (direction === "next" ? 1 : -1));
-        break;
-      case "week":
-        newDate.setDate(newDate.getDate() + (direction === "next" ? 7 : -7));
-        break;
-      case "month":
-        newDate.setMonth(newDate.getMonth() + (direction === "next" ? 1 : -1));
-        break;
-    }
-    setView((prev) => ({ ...prev, date: newDate }));
-  };
-
-  const getWeekDates = (date: Date) => {
+  const getWeekStart = (date: Date): Date => {
     const start = new Date(date);
     const day = start.getDay();
     const diff = start.getDate() - day + (day === 0 ? -6 : 1);
     start.setDate(diff);
+    start.setHours(0, 0, 0, 0);
+    return start;
+  };
+
+  const getWeekEnd = (date: Date): Date => {
+    const start = getWeekStart(date);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+    return end;
+  };
+
+  const getWeekDates = (date: Date): Date[] => {
+    const start = getWeekStart(date);
     const dates: Date[] = [];
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 5; i++) { // Seulement lundi à vendredi
       const d = new Date(start);
       d.setDate(start.getDate() + i);
       dates.push(d);
@@ -274,125 +120,225 @@ const InteractiveCalendar: React.FC = () => {
     return dates;
   };
 
-  const formatDate = (date: Date) => date.toISOString().split("T")[0];
-
-  const getEventStyle = (event: CalendarEvent) => ({
-    backgroundColor: event.subject.color,
-    borderLeft: `4px solid ${event.subject.color}`,
-    opacity: event.status === "completed" ? 0.6 : 1,
-    borderColor: event.status === "conflict" ? "#EF4444" : event.subject.color,
-  });
-
-  const getConflictIcon = (severity: string) => {
-    switch (severity) {
-      case "critical":
-        return <AlertTriangle className="w-4 h-4 text-red-600" />;
-      case "high":
-        return <AlertTriangle className="w-4 h-4 text-orange-600" />;
-      case "medium":
-        return <AlertTriangle className="w-4 h-4 text-yellow-600" />;
-      default:
-        return <Info className="w-4 h-4 text-blue-600" />;
+  const navigateDate = (direction: 'prev' | 'next') => {
+    const newDate = new Date(view.date);
+    switch (view.mode) {
+      case 'day':
+        newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
+        break;
+      case 'week':
+        newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
+        break;
+      case 'month':
+        newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
+        break;
     }
+    setView(prev => ({ ...prev, date: newDate }));
+  };
+
+  const goToToday = () => {
+    const today = new Date();
+    setView(prev => ({ ...prev, date: today }));
+  };
+
+  const getDateDisplay = () => {
+    const currentDate = new Date();
+    return {
+      month: currentDate.toLocaleDateString('fr-FR', { month: 'long' }),
+      year: currentDate.getFullYear().toString()
+    };
+  };
+
+  const handleNewCourse = () => {
+    toast.success('Nouvelle fonctionnalité de cours à implémenter');
+  };
+
+  const handleRefresh = async () => {
+    await loadEvents();
+    toast.success('Calendrier actualisé');
+  };
+
+  const handleExport = () => {
+    toast.success('Export à implémenter');
+  };
+
+  const handleShare = () => {
+    toast.success('Partage à implémenter');
   };
 
   const renderWeekView = () => {
     const weekDates = getWeekDates(view.date);
+    const { month, year } = getDateDisplay();
+    
     return (
-      <div className="flex flex-col h-full">
-        <div className="grid grid-cols-8 border-b border-gray-200">
-          <div className="p-4 bg-gray-50 border-r border-gray-200">
-            <span className="text-sm font-medium text-gray-700">Heure</span>
+      <div className="flex flex-col h-full bg-white">
+        {/* En-tête du calendrier */}
+        <div className="border-b border-gray-200 bg-white px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* Navigation et titre */}
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => navigateDate('prev')}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  disabled={loading}
+                >
+                  <ChevronLeft className="w-5 h-5 text-gray-600" />
+                </button>
+                
+                <button
+                  onClick={goToToday}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Aujourd'hui
+                </button>
+                
+                <button
+                  onClick={() => navigateDate('next')}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  disabled={loading}
+                >
+                  <ChevronRight className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+
+              <h1 className="text-xl font-semibold text-gray-900">
+                {month} {year}
+              </h1>
+            </div>
+
+            {/* Contrôles de vue et actions */}
+            <div className="flex items-center space-x-4">
+              {/* Sélecteur de vue */}
+              <div className="flex bg-gray-100 rounded-lg p-1">
+                {[
+                  { id: 'day', label: 'Jour' },
+                  { id: 'week', label: 'Semaine' },
+                  { id: 'month', label: 'Mois' }
+                ].map((mode) => (
+                  <button
+                    key={mode.id}
+                    onClick={() => setView(prev => ({ ...prev, mode: mode.id as any }))}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                      view.mode === mode.id
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    {mode.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={handleRefresh}
+                  disabled={loading}
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Actualiser"
+                >
+                  <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+                </button>
+
+                <button
+                  onClick={() => {}}
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Filtres"
+                >
+                  <Filter className="w-5 h-5" />
+                </button>
+
+                <button
+                  onClick={handleExport}
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Exporter"
+                >
+                  <Download className="w-5 h-5" />
+                </button>
+
+                <button
+                  onClick={handleShare}
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Partager"
+                >
+                  <Share className="w-5 h-5" />
+                </button>
+
+                <button
+                  onClick={handleNewCourse}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 ml-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Nouveau Cours</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Titre de la section */}
+        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+            <CalendarIcon className="w-5 h-5" />
+            <span>Calendrier Interactif</span>
+          </h2>
+        </div>
+
+        {/* En-tête des jours de la semaine */}
+        <div className="grid grid-cols-6 border-b border-gray-200 bg-gray-50">
+          <div className="p-4 text-center border-r border-gray-200">
+            <div className="w-12 h-12 flex items-center justify-center">
+              <Clock className="w-4 h-4 text-gray-400" />
+            </div>
           </div>
           {weekDates.map((date, index) => (
-            <div
-              key={index}
-              className="p-4 bg-gray-50 border-r border-gray-200 text-center"
-            >
-              <div className="text-sm font-medium text-gray-700">
+            <div key={index} className="p-4 text-center border-r border-gray-200">
+              <div className="text-sm font-medium text-gray-600 mb-1">
                 {daysOfWeek[index]}
               </div>
-              <div className="text-lg font-bold text-gray-900">
-                {date.getDate()}
+              <div className={`text-lg font-bold ${
+                date.toDateString() === new Date().toDateString() 
+                  ? 'text-blue-600' 
+                  : 'text-gray-900'
+              }`}>
+                {date.getDate()} {date.toLocaleDateString('fr-FR', { month: 'short' })}
               </div>
             </div>
           ))}
         </div>
+
+        {/* Grille des heures */}
         <div className="flex-1 overflow-auto">
-          <div className="grid grid-cols-8 h-full">
+          <div className="grid grid-cols-6">
+            {/* Colonne des heures */}
             <div className="border-r border-gray-200">
               {timeSlots.map((time, index) => (
                 <div
                   key={index}
-                  className="h-16 border-b border-gray-100 flex items-center justify-center text-sm text-gray-600"
+                  className="h-16 border-b border-gray-100 flex items-center justify-center bg-gray-50"
                 >
-                  {time}
+                  <span className="text-sm text-gray-600 font-medium">{time}</span>
                 </div>
               ))}
             </div>
+
+            {/* Colonnes des jours */}
             {weekDates.map((date, dayIndex) => (
               <div key={dayIndex} className="border-r border-gray-200 relative">
                 {timeSlots.map((time, timeIndex) => (
                   <div
                     key={timeIndex}
-                    className="h-16 border-b border-gray-100 relative"
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      if (draggedEvent)
-                        handleEventDrop(draggedEvent, formatDate(date), time);
+                    className="h-16 border-b border-gray-100 relative hover:bg-gray-50 cursor-pointer transition-colors"
+                    onClick={() => {
+                      // Logique pour créer un nouveau cours à cette heure
+                      console.log(`Nouveau cours le ${date.toISOString().split('T')[0]} à ${time}`);
                     }}
                   >
-                    {filteredEvents
-                      .filter(
-                        (event) =>
-                          event.date === formatDate(date) &&
-                          event.startTime <= time &&
-                          addMinutesToTime(time, 30) <= event.endTime
-                      )
-                      .map((event) => {
-                        const eventStart = timeToMinutes(event.startTime);
-                        const slotStart = timeToMinutes(time);
-                        const isFirstSlot =
-                          eventStart >= slotStart &&
-                          eventStart < slotStart + 30;
-                        if (!isFirstSlot) return null;
-                        const eventHeight = (event.duration / 30) * 64;
-                        return (
-                          <div
-                            key={event.id}
-                            className="absolute left-1 right-1 bg-white rounded shadow-sm border cursor-pointer hover:shadow-md transition-shadow"
-                            style={{
-                              ...getEventStyle(event),
-                              height: `${eventHeight - 4}px`,
-                              zIndex: 10,
-                            }}
-                            onClick={() => handleEventClick(event)}
-                            draggable
-                            onDragStart={() => handleEventDrag(event)}
-                          >
-                            <div className="p-2 text-xs">
-                              <div className="font-medium text-white truncate">
-                                {event.title}
-                              </div>
-                              <div className="text-white opacity-90 truncate">
-                                {event.teacher.name}
-                              </div>
-                              <div className="text-white opacity-90 truncate">
-                                {event.room.name}
-                              </div>
-                              {event.conflicts &&
-                                event.conflicts.length > 0 && (
-                                  <div className="mt-1">
-                                    {getConflictIcon(
-                                      event.conflicts[0].severity
-                                    )}
-                                  </div>
-                                )}
-                            </div>
-                          </div>
-                        );
-                      })}
+                    {/* Espace pour les événements (vide pour l'instant comme dans l'image) */}
+                    <div className="absolute inset-1">
+                      {/* Les événements seraient rendus ici s'il y en avait */}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -405,192 +351,44 @@ const InteractiveCalendar: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
-      <div className="bg-white border-b border-gray-200 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => navigateDate("prev")}
-                className="p-2 hover:bg-gray-100 rounded-lg"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() =>
-                  setView((prev) => ({ ...prev, date: new Date() }))
-                }
-                className="px-4 py-2 text-lg font-semibold text-gray-900 hover:bg-gray-100 rounded-lg"
-              >
-                {view.mode === "month"
-                  ? view.date.toLocaleDateString("fr-FR", {
-                      month: "long",
-                      year: "numeric",
-                    })
-                  : view.mode === "week"
-                  ? `Semaine du ${getWeekDates(view.date)[0].toLocaleDateString(
-                      "fr-FR",
-                      { day: "numeric", month: "short" }
-                    )}`
-                  : view.date.toLocaleDateString("fr-FR", {
-                      weekday: "long",
-                      day: "numeric",
-                      month: "long",
-                    })}
-              </button>
-              <button
-                onClick={() => navigateDate("next")}
-                className="p-2 hover:bg-gray-100 rounded-lg"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
-              {[
-                { id: "day", label: "Jour" },
-                { id: "week", label: "Semaine" },
-                { id: "month", label: "Mois" },
-                { id: "agenda", label: "Agenda" },
-              ].map((mode) => (
-                <button
-                  key={mode.id}
-                  onClick={() =>
-                    setView((prev) => ({ ...prev, mode: mode.id as any }))
-                  }
-                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                    view.mode === mode.id
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  {mode.label}
-                </button>
-              ))}
+      {/* Contenu principal */}
+      <div className="flex-1 overflow-hidden">
+        {view.mode === 'week' && renderWeekView()}
+        
+        {view.mode === 'day' && (
+          <div className="h-full flex items-center justify-center bg-white">
+            <div className="text-center py-12">
+              <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Vue Jour</h3>
+              <p className="text-gray-500">
+                La vue détaillée par jour sera disponible prochainement
+              </p>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Rechercher..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
-              />
+        )}
+        
+        {view.mode === 'month' && (
+          <div className="h-full flex items-center justify-center bg-white">
+            <div className="text-center py-12">
+              <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Vue Mensuelle</h3>
+              <p className="text-gray-500">
+                La vue mensuelle sera disponible prochainement
+              </p>
             </div>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center"
-            >
-              <Filter className="w-4 h-4 mr-2" />
-              Filtres
-            </button>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center">
-              <Plus className="w-4 h-4 mr-2" />
-              Nouveau cours
-            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Indicateur de chargement */}
+      {loading && (
+        <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-4 rounded-lg shadow-lg flex items-center space-x-3">
+            <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />
+            <span className="text-sm font-medium text-gray-900">Chargement...</span>
           </div>
         </div>
-        {showFilters && (
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="showConflicts"
-                  checked={filters.showConflicts}
-                  onChange={(e) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      showConflicts: e.target.checked,
-                    }))
-                  }
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label
-                  htmlFor="showConflicts"
-                  className="ml-2 text-sm text-gray-700"
-                >
-                  Afficher conflits
-                </label>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="showCompleted"
-                  checked={filters.showCompleted}
-                  onChange={(e) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      showCompleted: e.target.checked,
-                    }))
-                  }
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label
-                  htmlFor="showCompleted"
-                  className="ml-2 text-sm text-gray-700"
-                >
-                  Afficher terminés
-                </label>
-              </div>
-              <select
-                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                value=""
-                onChange={(e) => {
-                  if (e.target.value) {
-                    setFilters((prev) => ({
-                      ...prev,
-                      types: [...prev.types, e.target.value],
-                    }));
-                  }
-                }}
-              >
-                <option value="">Type de cours</option>
-                <option value="CM">Cours Magistral</option>
-                <option value="TD">Travaux Dirigés</option>
-                <option value="TP">Travaux Pratiques</option>
-                <option value="EXAM">Examen</option>
-                <option value="PROJECT">Projet</option>
-              </select>
-              <button
-                onClick={() =>
-                  setFilters({
-                    teachers: [],
-                    rooms: [],
-                    programs: [],
-                    subjects: [],
-                    types: [],
-                    showConflicts: true,
-                    showCompleted: false,
-                  })
-                }
-                className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Réinitialiser
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-      <div className="flex-1 overflow-hidden" ref={calendarRef}>
-        {view.mode === "week" && renderWeekView()}
-        {view.mode === "agenda" && (
-          <div className="p-8 text-center text-gray-500">
-            Vue agenda en développement
-          </div>
-        )}
-        {view.mode === "day" && (
-          <div className="p-8 text-center text-gray-500">
-            Vue jour en développement
-          </div>
-        )}
-        {view.mode === "month" && (
-          <div className="p-8 text-center text-gray-500">
-            Vue mois en développement
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 };

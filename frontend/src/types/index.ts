@@ -121,3 +121,6 @@ export interface DashboardStats {
   program_students?: number;
   program_subjects?: number;
 }
+
+// ===== EXPORT DES NOUVEAUX TYPES =====
+export * from './enhanced';

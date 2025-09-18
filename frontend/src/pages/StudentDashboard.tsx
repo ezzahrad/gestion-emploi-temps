@@ -16,7 +16,7 @@ export const StudentDashboard: React.FC = () => {
   useAuth();
 
   // Get student's program schedule for current week
-  const { data: weekSchedules = [] } = useQuery(
+  const { data: weekData, isLoading } = useQuery(
     'student-week-schedule',
     () => {
       const today = new Date();
@@ -27,6 +27,16 @@ export const StudentDashboard: React.FC = () => {
       return scheduleAPI.getScheduleByWeek(params).then((res: { data: any; }) => res.data);
     }
   );
+
+  // Extract schedules from the API response structure
+  const weekSchedules = React.useMemo(() => {
+    if (!weekData || !weekData.days) return [];
+    
+    // Flatten all schedules from all days into a single array
+    return weekData.days.reduce((allSchedules: any[], day: any) => {
+      return allSchedules.concat(day.schedules || []);
+    }, []);
+  }, [weekData]);
 
   // Get today's schedule
   const today = new Date();

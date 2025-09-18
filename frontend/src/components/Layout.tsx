@@ -52,9 +52,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         icon: <Home className="h-5 w-5" />
       },
       {
+        name: 'Calendrier',
+        href: '/calendar',
+        icon: <Calendar className="h-5 w-5" />
+      },
+      {
         name: 'Emploi du temps',
         href: '/schedule',
-        icon: <Calendar className="h-5 w-5" />
+        icon: <Clock className="h-5 w-5" />
       }
     ];
 
@@ -109,8 +114,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               icon: <Clock className="h-4 w-4" />
             },
             {
-              name: 'Import Excel',
-              href: '/admin/import-excel',
+              name: 'Optimisation IA',
+              href: '/optimize',
+              icon: <Target className="h-4 w-4" />
+            },
+            {
+              name: 'Import/Export',
+              href: '/import-export',
               icon: <Upload className="h-4 w-4" />
             },
             {

@@ -1,0 +1,310 @@
+name: 🚀 AppGET CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+  POSTGRES_PASSWORD: postgres
+  POSTGRES_DB: test_appget
+
+jobs:
+  # Tests Backend Django
+  backend-tests:
+    name: 🐍 Backend Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_appget
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+
+    - name: 📦 Install Python dependencies
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install reportlab Pillow pytest-django pytest-cov
+
+    - name: 🔧 Setup environment
+      run: |
+        cd backend
+        cp .env.example .env || echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/test_appget" > .env
+        echo "REDIS_URL=redis://localhost:6379/0" >> .env
+        echo "SECRET_KEY=test-secret-key-for-ci" >> .env
+        echo "DEBUG=1" >> .env
+
+    - name: 🔄 Run migrations
+      run: |
+        cd backend
+        python manage.py migrate
+
+    - name: 🧪 Run Django tests
+      run: |
+        cd backend
+        python manage.py test --verbosity=2
+        
+    - name: 🧪 Run enhanced features tests
+      run: |
+        cd backend
+        python tests/test_enhanced_features.py
+
+    - name: 📊 Generate coverage report
+      run: |
+        cd backend
+        pytest --cov=. --cov-report=xml
+      continue-on-error: true
+
+    - name: 📤 Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./backend/coverage.xml
+        flags: backend
+        name: backend-coverage
+      continue-on-error: true
+
+  # Tests Frontend React
+  frontend-tests:
+    name: ⚛️ Frontend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: 📦 Install dependencies
+      run: |
+        cd frontend
+        npm ci
+
+    - name: 🔍 Lint code
+      run: |
+        cd frontend
+        npm run lint
+
+    - name: 🏗️ Build application
+      run: |
+        cd frontend
+        npm run build
+
+    - name: 🧪 Run tests
+      run: |
+        cd frontend
+        npm test -- --coverage --watchAll=false
+
+    - name: 📤 Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./frontend/coverage/lcov.info
+        flags: frontend
+        name: frontend-coverage
+      continue-on-error: true
+
+  # Tests d'intégration avec Docker
+  integration-tests:
+    name: 🐳 Integration Tests
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests]
+
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🐳 Setup Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: 🏗️ Build with Docker Compose
+      run: |
+        docker-compose -f docker-compose.yml build
+
+    - name: 🚀 Start services
+      run: |
+        docker-compose up -d
+        sleep 30  # Attendre que les services démarrent
+
+    - name: 🔍 Check services health
+      run: |
+        docker-compose ps
+        
+        # Vérifier que l'API répond
+        timeout 60 bash -c 'until curl -f http://localhost:8000/admin/; do sleep 2; done'
+        
+        # Vérifier Redis
+        docker-compose exec -T redis redis-cli ping
+        
+        # Vérifier PostgreSQL
+        docker-compose exec -T db pg_isready -U appget_user
+
+    - name: 🧪 Run validation script
+      run: |
+        python validate_features.py
+
+    - name: 📋 Show logs on failure
+      if: failure()
+      run: |
+        docker-compose logs web
+        docker-compose logs db
+        docker-compose logs redis
+
+    - name: 🛑 Cleanup
+      if: always()
+      run: |
+        docker-compose down -v
+
+  # Analyse de sécurité
+  security-scan:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    needs: [backend-tests]
+
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: 🔒 Run Bandit security scan
+      run: |
+        pip install bandit[toml]
+        bandit -r backend/ -f json -o bandit-report.json
+      continue-on-error: true
+
+    - name: 🔍 Run Safety check
+      run: |
+        cd backend
+        pip install safety
+        safety check --json --output safety-report.json
+      continue-on-error: true
+
+    - name: 📤 Upload security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          backend/safety-report.json
+      continue-on-error: true
+
+  # Déploiement automatique (si sur main)
+  deploy:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests, integration-tests]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🐳 Setup Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: 🔑 Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+      if: ${{ secrets.DOCKER_USERNAME }}
+
+    - name: 🏗️ Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: ${{ secrets.DOCKER_USERNAME != '' }}
+        tags: |
+          ${{ secrets.DOCKER_USERNAME }}/appget:latest
+          ${{ secrets.DOCKER_USERNAME }}/appget:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+      if: ${{ secrets.DOCKER_USERNAME }}
+
+    - name: 📋 Generate deployment summary
+      run: |
+        echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Triggered by**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Timestamp**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: ✅ Success" >> $GITHUB_STEP_SUMMARY
+
+  # Notification de fin
+  notify:
+    name: 📢 Notify Results
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests, integration-tests, security-scan]
+    if: always()
+
+    steps:
+    - name: 📊 Check job results
+      run: |
+        echo "Backend tests: ${{ needs.backend-tests.result }}"
+        echo "Frontend tests: ${{ needs.frontend-tests.result }}"
+        echo "Integration tests: ${{ needs.integration-tests.result }}"
+        echo "Security scan: ${{ needs.security-scan.result }}"
+
+    - name: 📢 Notify on Discord/Slack
+      if: ${{ secrets.DISCORD_WEBHOOK || secrets.SLACK_WEBHOOK }}
+      run: |
+        if [ "${{ needs.backend-tests.result }}" == "success" ] && 
+           [ "${{ needs.frontend-tests.result }}" == "success" ] && 
+           [ "${{ needs.integration-tests.result }}" == "success" ]; then
+          echo "✅ All tests passed!"
+          # Ici vous pouvez ajouter la notification Discord/Slack
+        else
+          echo "❌ Some tests failed!"
+          # Ici vous pouvez ajouter la notification d'échec
+        fi
+
+    - name: 📋 Final summary
+      run: |
+        echo "## 🎯 Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+        echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Backend Tests | ${{ needs.backend-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Frontend Tests | ${{ needs.frontend-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Integration Tests | ${{ needs.integration-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Security Scan | ${{ needs.security-scan.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY

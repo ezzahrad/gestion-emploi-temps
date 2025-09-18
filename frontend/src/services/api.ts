@@ -167,6 +167,30 @@ export const scheduleAPI = {
 
   approveMakeup: (id: number, action: "approve" | "reject") =>
     api.post(`/schedule/makeup-sessions/${id}/approve/`, { action }),
+
+  // AI Optimization
+  getOptimizationStats: () => api.get("/schedule/optimization/stats/"),
+
+  optimizeSchedules: (data: any) =>
+    api.post("/schedule/optimization/optimize/", data),
+
+  saveOptimizationConfig: (data: any) =>
+    api.post("/schedule/optimization/config/", data),
+
+  exportOptimizationResults: () =>
+    api.get("/schedule/optimization/export/", { responseType: "blob" }),
+
+  // Import/Export
+  importSchedules: (formData: FormData) =>
+    api.post("/schedule/import/", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+
+  downloadImportTemplate: () =>
+    api.get("/schedule/import/template/", { responseType: "blob" }),
+
+  exportSchedules: (params: any) =>
+    api.get("/schedule/export/", { params, responseType: "blob" }),
 };
 
 // Notifications API
@@ -178,4 +202,117 @@ export const notificationsAPI = {
   markAllAsRead: () => api.post("/notifications/mark-all-read/"),
 
   getUnreadCount: () => api.get("/notifications/unread-count/"),
+};
+
+// Grades API
+export const gradesAPI = {
+  // Grade Scales
+  getGradeScales: () => api.get("/grades/grade-scales/"),
+  
+  // Evaluations
+  getEvaluations: (params?: any) => api.get("/grades/evaluations/", { params }),
+  createEvaluation: (data: any) => api.post("/grades/evaluations/", data),
+  updateEvaluation: (id: number, data: any) => api.put(`/grades/evaluations/${id}/`, data),
+  deleteEvaluation: (id: number) => api.delete(`/grades/evaluations/${id}/`),
+  publishEvaluation: (id: number) => api.post(`/grades/evaluations/${id}/publish/`),
+  getEvaluationStats: (id: number) => api.get(`/grades/evaluations/${id}/statistics/`),
+  
+  // Grades
+  getGrades: (params?: any) => api.get("/grades/grades/", { params }),
+  createGrade: (data: any) => api.post("/grades/grades/", data),
+  updateGrade: (id: number, data: any) => api.put(`/grades/grades/${id}/`, data),
+  deleteGrade: (id: number) => api.delete(`/grades/grades/${id}/`),
+  bulkCreateGrades: (data: any) => api.post("/grades/grades/bulk_create/", data),
+  publishGrade: (id: number) => api.post(`/grades/grades/${id}/publish/`),
+  getMyGrades: () => api.get("/grades/grades/my_grades/"),
+  
+  // Subject Summaries
+  getSubjectSummaries: (params?: any) => api.get("/grades/subject-summaries/", { params }),
+  recalculateSummary: (id: number) => api.post(`/grades/subject-summaries/${id}/recalculate/`),
+  validateSummary: (id: number) => api.post(`/grades/subject-summaries/${id}/validate/`),
+  getMySummaries: () => api.get("/grades/subject-summaries/my_summaries/"),
+  
+  // Transcripts
+  getTranscripts: (params?: any) => api.get("/grades/transcripts/", { params }),
+  createTranscript: (data: any) => api.post("/grades/transcripts/", data),
+  updateTranscript: (id: number, data: any) => api.put(`/grades/transcripts/${id}/`, data),
+  calculateGPA: (id: number) => api.post(`/grades/transcripts/${id}/calculate_gpa/`),
+  finalizeTranscript: (id: number) => api.post(`/grades/transcripts/${id}/finalize/`),
+  getMyTranscripts: () => api.get("/grades/transcripts/my_transcripts/"),
+  getCurrentTranscript: () => api.get("/grades/transcripts/current_transcript/"),
+};
+
+// Absences API
+export const absencesAPI = {
+  // Absence Policies
+  getAbsencePolicies: () => api.get("/absences/policies/"),
+  
+  // Absences
+  getAbsences: (params?: any) => api.get("/absences/absences/", { params }),
+  createAbsence: (data: any) => api.post("/absences/absences/", data),
+  updateAbsence: (id: number, data: any) => api.put(`/absences/absences/${id}/`, data),
+  deleteAbsence: (id: number) => api.delete(`/absences/absences/${id}/`),
+  approveAbsence: (id: number) => api.post(`/absences/absences/${id}/approve/`),
+  rejectAbsence: (id: number, comments?: string) => api.post(`/absences/absences/${id}/reject/`, { comments }),
+  uploadJustification: (id: number, file: File) => {
+    const formData = new FormData();
+    formData.append('justification_document', file);
+    return api.post(`/absences/absences/${id}/upload_justification/`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  getMyAbsences: () => api.get("/absences/absences/my_absences/"),
+  getAbsenceStatistics: () => api.get("/absences/absences/statistics/"),
+  
+  // Makeup Sessions
+  getMakeupSessions: (params?: any) => api.get("/absences/makeup-sessions/", { params }),
+  createMakeupSession: (data: any) => api.post("/absences/makeup-sessions/", data),
+  updateMakeupSession: (id: number, data: any) => api.put(`/absences/makeup-sessions/${id}/`, data),
+  confirmMakeupSession: (id: number) => api.post(`/absences/makeup-sessions/${id}/confirm/`),
+  completeMakeupSession: (id: number, data: any) => api.post(`/absences/makeup-sessions/${id}/complete/`, data),
+  addMakeupFeedback: (id: number, feedback: string) => api.post(`/absences/makeup-sessions/${id}/add_feedback/`, { feedback }),
+  getMySessions: () => api.get("/absences/makeup-sessions/my_sessions/"),
+  
+  // Attendance Records
+  getAttendanceRecords: (params?: any) => api.get("/absences/attendance/", { params }),
+  createAttendanceRecord: (data: any) => api.post("/absences/attendance/", data),
+  bulkCreateAttendance: (data: any) => api.post("/absences/attendance/bulk_create/", data),
+  validateAttendanceRecord: (id: number) => api.post(`/absences/attendance/${id}/validate_record/`),
+  getAttendanceBySchedule: (scheduleId: number) => api.get("/absences/attendance/by_schedule/", { params: { schedule_id: scheduleId } }),
+  
+  // Student Statistics
+  getAbsenceStatistics: (params?: any) => api.get("/absences/statistics/", { params }),
+  recalculateStatistics: (id: number, startDate?: string, endDate?: string) => api.post(`/absences/statistics/${id}/recalculate/`, { start_date: startDate, end_date: endDate }),
+  getMyStatistics: () => api.get("/absences/statistics/my_statistics/"),
+  getAtRiskStudents: () => api.get("/absences/statistics/at_risk_students/"),
+  generateAbsenceReport: (data: any) => api.post("/absences/statistics/generate_report/", data),
+};
+
+// PDF Export API
+export const pdfExportAPI = {
+  // Templates
+  getTemplates: (params?: any) => api.get("/pdf-export/templates/", { params }),
+  createTemplate: (data: any) => api.post("/pdf-export/templates/", data),
+  updateTemplate: (id: number, data: any) => api.put(`/pdf-export/templates/${id}/`, data),
+  deleteTemplate: (id: number) => api.delete(`/pdf-export/templates/${id}/`),
+  
+  // Export Jobs
+  getExportJobs: (params?: any) => api.get("/pdf-export/jobs/", { params }),
+  createExportJob: (data: any) => api.post("/pdf-export/jobs/", data),
+  cancelExportJob: (id: number) => api.post(`/pdf-export/jobs/${id}/cancel/`),
+  downloadPDF: (jobId: string) => api.get(`/pdf-export/jobs/${jobId}/download/`, { responseType: 'blob' }),
+  bulkExport: (data: any) => api.post("/pdf-export/jobs/bulk_export/", data),
+  getMyExports: () => api.get("/pdf-export/jobs/my_exports/"),
+  getExportStatistics: () => api.get("/pdf-export/jobs/statistics/"),
+  
+  // Settings
+  getExportSettings: () => api.get("/pdf-export/settings/"),
+  updateExportSettings: (id: number, data: any) => api.put(`/pdf-export/settings/${id}/`, data),
+  
+  // Statistics
+  getExportStatistics: (params?: any) => api.get("/pdf-export/statistics/", { params }),
+  getExportSummary: () => api.get("/pdf-export/statistics/summary/"),
+  
+  // Download Logs
+  getDownloadLogs: (params?: any) => api.get("/pdf-export/download-logs/", { params }),
 };

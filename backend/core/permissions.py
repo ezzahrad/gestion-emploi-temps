@@ -35,6 +35,32 @@ class IsTeacherOrAdmin(permissions.BasePermission):
         return user_role in ['admin', 'teacher']
 
 
+class IsStudentOrTeacher(permissions.BasePermission):
+    """
+    Permission qui permet l'accès aux étudiants et enseignants.
+    """
+    
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return False
+        
+        user_role = getattr(request.user, 'role', None)
+        return user_role in ['student', 'teacher', 'admin']
+
+
+class IsStudent(permissions.BasePermission):
+    """
+    Permission qui permet l'accès aux étudiants seulement.
+    """
+    
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return False
+        
+        user_role = getattr(request.user, 'role', None)
+        return user_role in ['student', 'admin']  # Admin a aussi accès
+
+
 class IsOwnerOrAdmin(permissions.BasePermission):
     """
     Permission qui permet à un utilisateur de modifier seulement ses propres objets,
@@ -60,6 +86,8 @@ class IsOwnerOrAdmin(permissions.BasePermission):
             return obj.created_by == request.user
         elif hasattr(obj, 'owner'):
             return obj.owner == request.user
+        elif hasattr(obj, 'student'):
+            return obj.student.user == request.user
         
         return False
 
@@ -120,8 +148,11 @@ class StudentViewPermission(permissions.BasePermission):
             return True
         
         # Étudiants peuvent voir seulement leurs propres données
-        if user_role == 'student' and hasattr(obj, 'user'):
-            return obj.user == request.user
+        if user_role == 'student':
+            if hasattr(obj, 'user'):
+                return obj.user == request.user
+            elif hasattr(obj, 'student'):
+                return obj.student.user == request.user
         
         return False
 
@@ -159,23 +190,17 @@ class TeacherViewPermission(permissions.BasePermission):
             return True
         
         # Enseignants peuvent modifier leurs propres données
-        if user_role == 'teacher' and hasattr(obj, 'user'):
+        if user_role == 'teacher':
             # En lecture seulement pour les autres enseignants
             if request.method in permissions.SAFE_METHODS:
                 return True
             # Modification seulement de ses propres données
-            return obj.user == request.user
-        
-        # Chef de département peut gérer les enseignants de son département
-        if user_role == 'department_head':
-            try:
-                from core.models import Teacher
-                if isinstance(obj, Teacher):
-                    user_departments = request.user.headed_department.all()
-                    teacher_departments = obj.departments.all()
-                    return any(dept in user_departments for dept in teacher_departments)
-            except:
-                pass
+            if hasattr(obj, 'user'):
+                return obj.user == request.user
+            elif hasattr(obj, 'teacher'):
+                return obj.teacher.user == request.user
+            elif hasattr(obj, 'graded_by'):
+                return obj.graded_by == request.user
         
         return False
 
@@ -204,38 +229,6 @@ class ScheduleManagementPermission(permissions.BasePermission):
             return user_role == 'admin'
         
         return False
-    
-    def has_object_permission(self, request, view, obj):
-        user_role = getattr(request.user, 'role', None)
-        
-        # Admin peut tout
-        if user_role == 'admin':
-            return True
-        
-        # Lecture pour tous les rôles autorisés
-        if request.method in permissions.SAFE_METHODS:
-            return True
-        
-        # Chef de département peut modifier les emplois du temps de son département
-        if user_role == 'department_head':
-            try:
-                user_departments = request.user.headed_department.all()
-                if hasattr(obj, 'subject'):
-                    return obj.subject.department in user_departments
-            except:
-                pass
-        
-        # Chef de filière peut modifier les emplois du temps de sa filière
-        if user_role == 'program_head':
-            try:
-                user_programs = request.user.headed_program.all()
-                if hasattr(obj, 'programs'):
-                    obj_programs = obj.programs.all()
-                    return any(program in user_programs for program in obj_programs)
-            except:
-                pass
-        
-        return False
 
 
 class ImportExportPermission(permissions.BasePermission):
@@ -261,9 +254,33 @@ class ImportExportPermission(permissions.BasePermission):
         return False
 
 
-class TimetableGenerationPermission(permissions.BasePermission):
+class IsAdminOrDepartmentHead(permissions.BasePermission):
     """
-    Permissions pour la génération automatique d'emplois du temps.
+    Permission pour Admin ou Chef de Département
+    """
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated and 
+            getattr(request.user, "role", None) in ["admin", "department_head"]
+        )
+
+
+class IsAdminOrProgramHead(permissions.BasePermission):
+    """
+    Permission pour Admin ou Responsable de Filière
+    """
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated and 
+            getattr(request.user, "role", None) in ["admin", "program_head"]
+        )
+
+
+# Permissions spécifiques pour les nouveaux modules
+
+class GradePermission(permissions.BasePermission):
+    """
+    Permissions pour le module de notes
     """
     
     def has_permission(self, request, view):
@@ -272,13 +289,120 @@ class TimetableGenerationPermission(permissions.BasePermission):
         
         user_role = getattr(request.user, 'role', None)
         
-        # Consultation des logs pour tous les niveaux administratifs
+        # Lecture pour tous les utilisateurs authentifiés
         if request.method in permissions.SAFE_METHODS:
-            return user_role in ['admin', 'department_head', 'program_head']
+            return user_role in ['admin', 'teacher', 'student']
         
-        # Génération d'emploi du temps seulement pour admin
-        if request.method == 'POST':
+        # Création/modification des notes pour enseignants et admin
+        if request.method in ['POST', 'PUT', 'PATCH']:
+            return user_role in ['admin', 'teacher']
+        
+        # Suppression pour admin seulement
+        if request.method == 'DELETE':
             return user_role == 'admin'
+        
+        return False
+    
+    def has_object_permission(self, request, view, obj):
+        user_role = getattr(request.user, 'role', None)
+        
+        # Admin peut tout
+        if user_role == 'admin':
+            return True
+        
+        # Enseignant peut voir/modifier les notes qu'il a créées
+        if user_role == 'teacher':
+            if hasattr(obj, 'graded_by'):
+                return obj.graded_by == request.user
+            return True  # Pour les évaluations
+        
+        # Étudiant peut voir seulement ses notes
+        if user_role == 'student':
+            if request.method in permissions.SAFE_METHODS:
+                if hasattr(obj, 'student'):
+                    return obj.student.user == request.user
+                elif hasattr(obj, 'user'):
+                    return obj.user == request.user
+        
+        return False
+
+
+class AbsencePermission(permissions.BasePermission):
+    """
+    Permissions pour le module d'absences
+    """
+    
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return False
+        
+        user_role = getattr(request.user, 'role', None)
+        
+        # Lecture pour tous les utilisateurs authentifiés
+        if request.method in permissions.SAFE_METHODS:
+            return user_role in ['admin', 'teacher', 'student']
+        
+        # Création d'absences pour étudiants et enseignants
+        if request.method == 'POST':
+            return user_role in ['admin', 'teacher', 'student']
+        
+        # Modification pour admin et enseignants (approbation)
+        if request.method in ['PUT', 'PATCH']:
+            return user_role in ['admin', 'teacher']
+        
+        # Suppression pour admin seulement
+        if request.method == 'DELETE':
+            return user_role == 'admin'
+        
+        return False
+    
+    def has_object_permission(self, request, view, obj):
+        user_role = getattr(request.user, 'role', None)
+        
+        # Admin peut tout
+        if user_role == 'admin':
+            return True
+        
+        # Enseignant peut approuver/rejeter les absences
+        if user_role == 'teacher':
+            return True
+        
+        # Étudiant peut voir/modifier seulement ses absences
+        if user_role == 'student':
+            if hasattr(obj, 'student'):
+                return obj.student.user == request.user
+            elif hasattr(obj, 'user'):
+                return obj.user == request.user
+        
+        return False
+
+
+class PDFExportPermission(permissions.BasePermission):
+    """
+    Permissions pour le module d'export PDF
+    """
+    
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return False
+        
+        user_role = getattr(request.user, 'role', None)
+        
+        # Tous les utilisateurs authentifiés peuvent exporter leurs données
+        return user_role in ['admin', 'teacher', 'student']
+    
+    def has_object_permission(self, request, view, obj):
+        user_role = getattr(request.user, 'role', None)
+        
+        # Admin peut voir tous les exports
+        if user_role == 'admin':
+            return True
+        
+        # Utilisateurs peuvent voir seulement leurs propres exports
+        if hasattr(obj, 'created_by'):
+            return obj.created_by == request.user
+        elif hasattr(obj, 'user'):
+            return obj.user == request.user
         
         return False
 
@@ -308,6 +432,21 @@ def teacher_or_admin_required(view_func):
         user_role = getattr(request.user, 'role', None)
         if user_role not in ['admin', 'teacher']:
             raise PermissionDenied("Accès réservé aux enseignants et administrateurs")
+        
+        return view_func(request, *args, **kwargs)
+    
+    return wrapped_view
+
+
+def student_or_teacher_required(view_func):
+    """Décorateur pour exiger le rôle étudiant ou enseignant"""
+    def wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('login')
+        
+        user_role = getattr(request.user, 'role', None)
+        if user_role not in ['admin', 'teacher', 'student']:
+            raise PermissionDenied("Accès réservé aux étudiants et enseignants")
         
         return view_func(request, *args, **kwargs)
     
@@ -379,17 +518,12 @@ class StudentAccessMixin:
         # Étudiant voit seulement ses données
         if user_role == 'student':
             try:
-                from core.models import Student
-                student = Student.objects.get(user=self.request.user)
-                
                 # Filtrer selon le type de modèle
-                if hasattr(queryset.model, 'programs'):
-                    return queryset.filter(programs=student.program)
-                elif hasattr(queryset.model, 'program'):
-                    return queryset.filter(program=student.program)
-                elif hasattr(queryset.model, 'user'):
+                if hasattr(queryset.model, 'user'):
                     return queryset.filter(user=self.request.user)
-            except Student.DoesNotExist:
+                elif hasattr(queryset.model, 'student'):
+                    return queryset.filter(student__user=self.request.user)
+            except:
                 return queryset.none()
         
         return queryset
@@ -413,37 +547,16 @@ class TeacherAccessMixin:
         # Enseignant voit ses données
         if user_role == 'teacher':
             try:
-                from core.models import Teacher
-                teacher = Teacher.objects.get(user=self.request.user)
-                
                 # Filtrer selon le type de modèle
                 if hasattr(queryset.model, 'teacher'):
-                    return queryset.filter(teacher=teacher)
-                elif hasattr(queryset.model, 'subjects'):
-                    return queryset.filter(subjects__in=teacher.subjects.all())
+                    return queryset.filter(teacher__user=self.request.user)
+                elif hasattr(queryset.model, 'graded_by'):
+                    return queryset.filter(graded_by=self.request.user)
+                elif hasattr(queryset.model, 'created_by'):
+                    return queryset.filter(created_by=self.request.user)
                 elif hasattr(queryset.model, 'user'):
                     return queryset.filter(user=self.request.user)
-            except Teacher.DoesNotExist:
+            except:
                 return queryset.none()
         
         return queryset
-class IsAdminOrDepartmentHead(permissions.BasePermission):
-    """
-    Permission pour Admin ou Chef de Département
-    """
-    def has_permission(self, request, view):
-        return (
-            request.user.is_authenticated and 
-            getattr(request.user, "role", None) in ["admin", "department_head"]
-        )
-
-
-class IsAdminOrProgramHead(permissions.BasePermission):
-    """
-    Permission pour Admin ou Responsable de Filière
-    """
-    def has_permission(self, request, view):
-        return (
-            request.user.is_authenticated and 
-            getattr(request.user, "role", None) in ["admin", "program_head"]
-        )

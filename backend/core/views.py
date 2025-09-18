@@ -14,14 +14,14 @@ from .permissions import IsAdminOrDepartmentHead, IsAdminOrProgramHead
 
 # Department Views
 class DepartmentListCreateView(generics.ListCreateAPIView):
-    queryset = Department.objects.all()
+    queryset = Department.objects.all().order_by('name')
     serializer_class = DepartmentSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['code']
     search_fields = ['name', 'code']
 
 class DepartmentDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Department.objects.all()
+    queryset = Department.objects.all().order_by('name')
     serializer_class = DepartmentSerializer
     permission_classes = [IsAdminOrDepartmentHead]
 
@@ -35,9 +35,9 @@ class ProgramListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         if user.role == 'admin':
-            return Program.objects.all()
+            return Program.objects.all().order_by('name')
         elif user.role in ['department_head', 'program_head']:
-            return Program.objects.filter(department=user.department)
+            return Program.objects.filter(department=user.department).order_by('name')
         return Program.objects.none()
 
 class ProgramDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -47,9 +47,9 @@ class ProgramDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         user = self.request.user
         if user.role == 'admin':
-            return Program.objects.all()
+            return Program.objects.all().order_by('name')
         elif user.role in ['department_head', 'program_head']:
-            return Program.objects.filter(department=user.department)
+            return Program.objects.filter(department=user.department).order_by('name')
         return Program.objects.none()
 
 # Room Views
@@ -62,10 +62,10 @@ class RoomListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         user = self.request.user
         if user.role == 'admin':
-            return Room.objects.all()
+            return Room.objects.all().order_by('name')
         elif user.role in ['department_head', 'program_head']:
-            return Room.objects.filter(department=user.department)
-        return Room.objects.filter(department=user.department)
+            return Room.objects.filter(department=user.department).order_by('name')
+        return Room.objects.filter(department=user.department).order_by('name')
 
 class RoomDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = RoomSerializer

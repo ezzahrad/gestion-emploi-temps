@@ -1,0 +1,124 @@
+MIT License
+
+Copyright (c) 2025 AppGET Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+================================================================================
+
+THIRD-PARTY LICENSES
+
+This software includes or may include components from the following third-party 
+projects, each subject to their own license terms:
+
+Django Framework
+- License: BSD-3-Clause
+- Copyright: Django Software Foundation
+- Website: https://www.djangoproject.com/
+
+React
+- License: MIT
+- Copyright: Meta Platforms, Inc. and affiliates
+- Website: https://react.dev/
+
+Django REST Framework
+- License: BSD-3-Clause  
+- Copyright: Tom Christie and contributors
+- Website: https://www.django-rest-framework.org/
+
+ReportLab
+- License: BSD-3-Clause (Open Source version)
+- Copyright: ReportLab Europe Ltd
+- Website: https://www.reportlab.com/
+
+TypeScript
+- License: Apache-2.0
+- Copyright: Microsoft Corporation
+- Website: https://www.typescriptlang.org/
+
+Tailwind CSS
+- License: MIT
+- Copyright: Tailwind Labs Inc.
+- Website: https://tailwindcss.com/
+
+PostgreSQL
+- License: PostgreSQL License
+- Copyright: PostgreSQL Global Development Group
+- Website: https://www.postgresql.org/
+
+Redis
+- License: BSD-3-Clause
+- Copyright: Redis Ltd.
+- Website: https://redis.io/
+
+Celery
+- License: BSD-3-Clause
+- Copyright: Ask Solem and contributors
+- Website: https://celeryproject.org/
+
+Pillow (PIL Fork)
+- License: HPND (Historical Permission Notice and Disclaimer)
+- Copyright: Jeffrey A. Clark (Alex) and contributors
+- Website: https://python-pillow.org/
+
+================================================================================
+
+ACKNOWLEDGMENTS
+
+We extend our gratitude to the open source community and the maintainers of 
+the above projects. AppGET builds upon the excellent work of these projects.
+
+For educational institutions using this software: This project is developed 
+with the goal of improving academic management and student experience.
+
+================================================================================
+
+DISCLAIMER
+
+This software is provided for educational and institutional use. While we 
+strive for reliability and security, users are responsible for:
+
+- Backing up their data regularly
+- Testing in non-production environments before deployment
+- Ensuring compliance with local data protection regulations
+- Maintaining appropriate security measures
+
+The contributors and maintainers of AppGET are not liable for any data loss, 
+security breaches, or other damages that may occur from the use of this software.
+
+================================================================================
+
+CONTRIBUTION
+
+By contributing to this project, you agree that your contributions will be 
+licensed under the same MIT License. See CONTRIBUTING.md for more details.
+
+================================================================================
+
+CONTACT
+
+For questions about licensing or to report security vulnerabilities:
+- Email: legal@appget.com
+- Security: security@appget.com
+- General: info@appget.com
+
+================================================================================
+
+This license file was last updated: January 15, 2025
+AppGET Version: 2.0.0

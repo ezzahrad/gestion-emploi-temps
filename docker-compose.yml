@@ -1,0 +1,136 @@
+version: '3.8'
+
+services:
+  # Base de données PostgreSQL
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: appget_db
+      POSTGRES_USER: appget_user
+      POSTGRES_PASSWORD: appget_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appget_user -d appget_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis pour le cache et les tâches asynchrones
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Application Django
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=1
+      - DATABASE_URL=postgresql://appget_user:appget_password@db:5432/appget_db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+      - media_files:/app/media
+      - static_files:/app/static
+      - pdf_exports:/app/pdf_exports
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "python manage.py runserver 0.0.0.0:8000"
+
+  # Worker Celery pour les tâches asynchrones (PDF, notifications)
+  celery:
+    build: .
+    environment:
+      - DEBUG=1
+      - DATABASE_URL=postgresql://appget_user:appget_password@db:5432/appget_db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+      - media_files:/app/media
+      - pdf_exports:/app/pdf_exports
+    depends_on:
+      - db
+      - redis
+      - web
+    command: >
+      sh -c "celery -A schedule_management worker --loglevel=info"
+
+  # Celery Beat pour les tâches programmées
+  celery-beat:
+    build: .
+    environment:
+      - DEBUG=1
+      - DATABASE_URL=postgresql://appget_user:appget_password@db:5432/appget_db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+      - media_files:/app/media
+    depends_on:
+      - db
+      - redis
+      - web
+    command: >
+      sh -c "celery -A schedule_management beat --loglevel=info"
+
+  # Frontend React (optionnel pour développement)
+  frontend:
+    image: node:18-alpine
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - node_modules:/app/node_modules
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000
+    command: >
+      sh -c "npm install && npm run dev -- --host 0.0.0.0"
+
+  # Nginx (optionnel pour production)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf
+      - static_files:/app/static
+      - media_files:/app/media
+    depends_on:
+      - web
+    profiles:
+      - production
+
+volumes:
+  postgres_data:
+  redis_data:
+  media_files:
+  static_files:
+  pdf_exports:
+  node_modules:
+
+networks:
+  default:
+    name: appget_network

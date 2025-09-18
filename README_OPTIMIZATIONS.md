@@ -57,24 +57,9 @@ Votre application a été complètement optimisée pour les environnements deskt
 
 ## 🛠️ Guide de Démarrage Rapide
 
-### Méthode 1: Scripts Automatiques
 
-**Windows:**
-```bash
-# Double-cliquer sur le fichier ou exécuter en ligne de commande
-start_appget.bat
-```
 
-**Linux/Mac:**
-```bash
-# Rendre le script exécutable
-chmod +x start_appget.sh
-
-# Lancer l'application
-./start_appget.sh
-```
-
-### Méthode 2: Démarrage Manuel
+### Méthode 1: Démarrage Manuel
 
 **Backend (Terminal 1):**
 ```bash
@@ -126,7 +111,6 @@ curl http://127.0.0.1:8000/api/
 curl -H "Authorization: Bearer YOUR_TOKEN" http://127.0.0.1:8000/api/auth/profile/
 ```
 
-## 📱 Interface Desktop vs Mobile
 
 ### Desktop (>1024px)
 - Sidebar étendue avec navigation complète
