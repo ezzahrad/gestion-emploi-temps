@@ -16,17 +16,11 @@ AppGET simplifie la gestion académique avec une interface moderne et des foncti
 
 #### 🎓 **Pour les Étudiants**
 - 📅 Consultation de l'emploi du temps personnel
-- 📊 Suivi des notes en temps réel
-- 📋 Gestion des absences avec justificatifs
-- 📄 Export des relevés de notes en PDF
 - 🔔 Notifications personnalisées
 
 #### 👨‍🏫 **Pour les Enseignants**
 - 🗓️ Gestion du planning de cours
-- ✏️ Saisie et gestion des notes
-- ✅ Prise de présences en temps réel
 - 📈 Génération de rapports de classe
-- 💬 Communication avec les étudiants
 
 #### 👨‍💼 **Pour les Administrateurs**
 - 🏛️ Gestion complète des emplois du temps
@@ -84,10 +78,9 @@ AppGET utilise une architecture moderne et scalable :
 ## 📱 Captures d'Écran
 
 ### Dashboard Étudiant
-*Interface moderne et intuitive pour consulter emploi du temps, notes et absences*
+*Interface moderne et intuitive pour consulter emploi du temps, absences*
 
-### Gestion des Notes (Enseignants)
-*Saisie rapide et efficace des évaluations avec calcul automatique des moyennes*
+
 
 ### Panneau d'Administration
 *Outils complets pour la gestion des utilisateurs et la configuration du système*
@@ -98,8 +91,6 @@ AppGET utilise une architecture moderne et scalable :
 
 | Module | Fonctionnalité | Description |
 |--------|----------------|-------------|
-| 📊 **Grades** | Système de notation complet | Gestion des évaluations, calcul automatique des moyennes, relevés officiels |
-| 📅 **Absences** | Gestion intelligente | Déclaration d'absences, justificatifs numériques, statistiques détaillées |
 | 📄 **PDF Export** | Documents professionnels | Export personnalisé emplois du temps, relevés, rapports avec templates |
 | 🔔 **Notifications** | Communication temps réel | Alertes personnalisables, notifications push, centres d'alerte |
 
@@ -123,13 +114,11 @@ AppGET utilise une architecture moderne et scalable :
 
 ### 📖 Guides Utilisateur
 - **[Guide d'Installation](./HOW_TO_INSTALL.md)** - Installation détaillée pas à pas
-- **[Guide des Fonctionnalités](./NOUVELLES_FONCTIONNALITES.md)** - Tour complet des nouvelles fonctionnalités
-- **[Guide de Déploiement](./DEPLOIEMENT_PRODUCTION.md)** - Mise en production professionnelle
+
 
 ### 🔧 Documentation Technique
 - **[API Documentation](http://localhost:8000/api/docs)** - Swagger UI interactif
-- **[Architecture Guide](./docs/ARCHITECTURE.md)** - Détails techniques de l'architecture
-- **[Troubleshooting](./TROUBLESHOOTING.md)** - Résolution des problèmes courants
+
 
 ## 🧪 Tests et Qualité
 
@@ -159,7 +148,7 @@ AppGET est compatible avec :
 - **DigitalOcean**
 - **Heroku**
 
-**Guide complet :** [DEPLOIEMENT_PRODUCTION.md](./DEPLOIEMENT_PRODUCTION.md)
+
 
 ## 🤝 Contribution
 
